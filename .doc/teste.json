@@ -1,0 +1,19 @@
+{
+  "domain": {
+    "id": 14632,
+    "user_id": null,
+    "name": "mtm.com",
+    "master": null,
+    "last_check": null,
+    "notified_serial": null,
+    "account": null,
+    "ttl": "86400",
+    "notes": "A domain",
+    "created_at": "2016-12-06T14:14:14.187-02:00",
+    "updated_at": "2016-12-06T14:14:14.187-02:00",
+    "authority_type": "M",
+    "addressing_type": "N",
+    "view_id": null,
+    "sibling_id": null
+  }
+}
