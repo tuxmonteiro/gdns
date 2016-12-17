@@ -1,9 +1,9 @@
 package main
 
 import (
-	"bytes"
 	"encoding/json"
 	"gopkg.in/gin-gonic/gin.v1"
+	"io/ioutil"
 	"net/http"
 )
 
@@ -33,28 +33,33 @@ type RecordRoot struct {
 	} `json:"record"`
 }
 
+func readBody(c *gin.Context) []byte {
+	body, err := ioutil.ReadAll(c.Request.Body)
+	if err != nil {
+		panic(err)
+	}
+	return body
+}
+
+func resultWithCreated(c *gin.Context, r interface{}) {
+	if err := json.Unmarshal(readBody(c), &r); err != nil {
+		panic(err)
+	}
+	c.JSON(http.StatusCreated, r)
+}
+
 func main() {
 	router := gin.Default()
 	router.POST("/domains/:domain_id/records.json", func(c *gin.Context) {
 		c.Param("domain_id")
-		body := new(bytes.Buffer)
-		body.ReadFrom(c.Request.Body)
 		record := RecordRoot{}
 		record.Record.Id = 1
-		if err := json.Unmarshal(body.Bytes(), &record); err != nil {
-			panic(err)
-		}
-		c.JSON(http.StatusCreated, record)
+		resultWithCreated(c, record)
 	})
 	router.POST("/domains.json", func(c *gin.Context) {
-		body := new(bytes.Buffer)
-		body.ReadFrom(c.Request.Body)
 		domain := DomainRoot{}
 		domain.Domain.Id = 1
-		if err := json.Unmarshal(body.Bytes(), &domain); err != nil {
-			panic(err)
-		}
-		c.JSON(http.StatusCreated, domain)
+		resultWithCreated(c, domain)
 	})
 	notify := func(c *gin.Context) {
 		// TODO: notify
