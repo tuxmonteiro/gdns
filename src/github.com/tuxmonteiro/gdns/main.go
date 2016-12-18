@@ -1,10 +1,8 @@
 package main
 
 import (
-	"encoding/json"
-	"gopkg.in/gin-gonic/gin.v1"
-	"io/ioutil"
 	"net/http"
+	"github.com/kataras/iris"
 )
 
 type DomainRoot struct {
@@ -33,41 +31,74 @@ type RecordRoot struct {
 	} `json:"record"`
 }
 
-func readBody(c *gin.Context) []byte {
-	body, err := ioutil.ReadAll(c.Request.Body)
-	if err != nil {
-		panic(err)
-	}
-	return body
+type PDnsWriteZone struct {
+	Name        string   `json:"name"`
+	Kind        string   `json:"kind"`
+	Masters     []string `json:"masters"`
+	NameServers []string `json:"nameservers"`
 }
 
-func resultWithCreated(c *gin.Context, r interface{}) {
-	if err := json.Unmarshal(readBody(c), &r); err != nil {
-		panic(err)
-	}
+type PDnsReadZone struct {
+	Account        string   `json:"account"`
+	DnsSec         bool     `json:"dnssec"`
+	Id             string   `json:"id"`
+	Kind           string   `json:"kind"`
+	LastCheck      int      `json:"last_check"`
+	Masters        []string `json:"masters"`
+	Name           string   `json:"name"`
+	NotifiedSerial int      `json:"notified_serial"`
+	Serial         int      `json:"serial"`
+	SoaEdit        string   `json:"soa_edit"`
+	SoaEditApi     string   `json:"soa_edit_api"`
+	Url            string   `json:"url"`
+	RRSets         []struct {
+		Comments []string `json:"comments"`
+		Name     string   `json:"name"`
+		Records  []struct {
+			Content  string `json:"content"`
+			Disabled bool   `json:"disabled"`
+		} `json:"records"`
+		Ttl  int    `json:"ttl"`
+		Type string `json:"type"`
+	} `json:"rrsets"`
+}
+
+type PDnsRRSets struct {
+	RRSets []struct {
+		Name       string `json:"name"`
+		Type       string `json:"type"`
+		Ttl        int    `json:"ttl"`
+		ChangeType string `json:"changetype"`
+		Records    []struct {
+			Content  string `json:"content"`
+			Disabled bool   `json:"disabled"`
+		} `json:"records"`
+	} `json:"rrsets"`
+}
+
+func resultWithCreated(c *iris.Context, r interface{}) {
+	c.ReadJSON(&r)
 	c.JSON(http.StatusCreated, r)
 }
 
 func main() {
-	router := gin.Default()
-	router.POST("/domains/:domain_id/records.json", func(c *gin.Context) {
+	iris.Post("/domains/:domain_id/records.json", func(c *iris.Context) {
 		c.Param("domain_id")
 		record := RecordRoot{}
 		record.Record.Id = 1
-		resultWithCreated(c, record)
+		resultWithCreated(c, &record)
 	})
-	router.POST("/domains.json", func(c *gin.Context) {
+	iris.Post("/domains.json", func(c *iris.Context) {
 		domain := DomainRoot{}
 		domain.Domain.Id = 1
-		resultWithCreated(c, domain)
+		resultWithCreated(c, &domain)
 	})
-	notify := func(c *gin.Context) {
+	notify := func(c *iris.Context) {
 		// TODO: notify
-		c.Status(http.StatusNoContent)
-		c.Done()
+		c.SetStatusCode(http.StatusNoContent)
 	}
-	router.POST("/bind9/export.json", notify)
-	router.POST("/bind9/schedule_export.json", notify)
+	iris.Post("/bind9/export.json", notify)
+	iris.Post("/bind9/schedule_export.json", notify)
 
-	router.Run(":8080")
+	iris.Listen(":8080")
 }
