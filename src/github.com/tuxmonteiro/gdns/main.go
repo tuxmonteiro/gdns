@@ -1,7 +1,6 @@
 package main
 
 import (
-	"net/http"
 	"github.com/kataras/iris"
 )
 
@@ -78,25 +77,30 @@ type PDnsRRSets struct {
 
 func resultWithCreated(c *iris.Context, r interface{}) {
 	c.ReadJSON(&r)
-	c.JSON(http.StatusCreated, r)
+	c.JSON(iris.StatusCreated, r)
+}
+
+func createRecords(c *iris.Context) {
+	c.Param("domain_id")
+	record := RecordRoot{}
+	record.Record.Id = 1
+	resultWithCreated(c, &record)
+}
+
+func createZone(c *iris.Context) {
+	domain := DomainRoot{}
+	domain.Domain.Id = 1
+	resultWithCreated(c, &domain)
+}
+
+func notify(c *iris.Context) {
+	// TODO: notify
+	c.SetStatusCode(iris.StatusNoContent)
 }
 
 func main() {
-	iris.Post("/domains/:domain_id/records.json", func(c *iris.Context) {
-		c.Param("domain_id")
-		record := RecordRoot{}
-		record.Record.Id = 1
-		resultWithCreated(c, &record)
-	})
-	iris.Post("/domains.json", func(c *iris.Context) {
-		domain := DomainRoot{}
-		domain.Domain.Id = 1
-		resultWithCreated(c, &domain)
-	})
-	notify := func(c *iris.Context) {
-		// TODO: notify
-		c.SetStatusCode(http.StatusNoContent)
-	}
+	iris.Post("/domains/:domain_id/records.json", createRecords)
+	iris.Post("/domains.json", createZone)
 	iris.Post("/bind9/export.json", notify)
 	iris.Post("/bind9/schedule_export.json", notify)
 
