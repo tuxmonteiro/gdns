@@ -6,8 +6,12 @@ import (
 	"github.com/kataras/iris"
 	"github.com/valyala/fasthttp"
 	"gopkg.in/square/go-jose.v1/json"
+	"github.com/takama/daemon"
 	_ "os/exec"
 	"strconv"
+	"os"
+	"os/signal"
+	"syscall"
 )
 
 var (
@@ -96,6 +100,45 @@ type pDNSRRSets struct {
 	RRSets []rr `json:"rrsets"`
 }
 
+type Service struct {
+	daemon.Daemon
+}
+
+func (service *Service) Manage() (string, error) {
+	usage := "Usage: gdns install | remove | start | stop | status"
+	if len(os.Args) > 1 {
+		command := os.Args[1]
+		switch command {
+		case "install":
+			return service.Install()
+		case "remove":
+			return service.Remove()
+		case "start":
+			return service.Start()
+		case "stop":
+			return service.Stop()
+		case "status":
+			return service.Status()
+		default:
+			return usage, nil
+		}
+	}
+	interrupt := make(chan os.Signal, 1)
+	signal.Notify(interrupt, os.Interrupt, os.Kill, syscall.SIGTERM)
+
+	client = newClient()
+	domains = make(map[int]string)
+
+	iris.Post("/domains/:domain_id/records.json", createRecords)
+	iris.Post("/domains.json", createZone)
+	iris.Post("/bind9/export.json", notify)
+	iris.Post("/bind9/schedule_export.json", notify)
+
+	go iris.Listen(":8080")
+
+	return usage, nil
+}
+
 func createRecords(c *iris.Context) {
 	domainId, _ := strconv.Atoi(c.Param("domain_id"))
 	zoneName := domains[domainId]
@@ -178,14 +221,8 @@ func newClient() *fasthttp.HostClient {
 
 func main() {
 	flag.Parse()
-
-	client = newClient()
-	domains = make(map[int]string)
-
-	iris.Post("/domains/:domain_id/records.json", createRecords)
-	iris.Post("/domains.json", createZone)
-	iris.Post("/bind9/export.json", notify)
-	iris.Post("/bind9/schedule_export.json", notify)
-
-	iris.Listen(":8080")
+	srv, _ := daemon.New("gdns", "", []string{})
+	service := &Service{srv}
+	status, _ := service.Manage()
+	fmt.Println(status)
 }
