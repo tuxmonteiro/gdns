@@ -12,12 +12,12 @@ DATA="{\"domain\": {\"name\": \"${DOMAIN}\", \"type\": \"MASTER\", \"ttl\": \"86
 ${CURL} -X POST -d "$DATA" ${GDNS}/domains.json | jq -r .domain.id | tee domain.id | sed 's/^/Domain ID: /'
 DID=$(cat domain.id)
 
-echo ${CURL} -X POST -d '{"record": {"name": "@", "type": "NS", "content":"ns1.'${DOMAIN}'."}}' ${GDNS}/domains/${DID}/records.json
-${CURL} -X POST -d '{"record": {"name": "@", "type": "NS", "content":"ns1.'${DOMAIN}'."}}' ${GDNS}/domains/${DID}/records.json | jq .
-echo ${CURL} -X POST -d '{"record": {"name": "@", "type": "NS", "content":"ns2.'${DOMAIN}'."}}' ${GDNS}/domains/${DID}/records.json
-${CURL} -X POST -d '{"record": {"name": "@", "type": "NS", "content":"ns2.'${DOMAIN}'."}}' ${GDNS}/domains/${DID}/records.json | jq .
-echo ${CURL} -X POST -d '{"record": {"name": "@", "type": "NS", "content":"ns3.'${DOMAIN}'."}}' ${GDNS}/domains/${DID}/records.json
-${CURL} -X POST -d '{"record": {"name": "@", "type": "NS", "content":"ns3.'${DOMAIN}'."}}' ${GDNS}/domains/${DID}/records.json | jq .
+echo ${CURL} -X POST -d '{"record": {"name": "'${DOMAIN}'.", "type": "NS", "content":"ns1.'${DOMAIN}'."}}' ${GDNS}/domains/${DID}/records.json
+${CURL} -X POST -d '{"record": {"name": "'${DOMAIN}'.", "type": "NS", "content":"ns1.'${DOMAIN}'."}}' ${GDNS}/domains/${DID}/records.json | jq .
+echo ${CURL} -X POST -d '{"record": {"name": "'${DOMAIN}'.", "type": "NS", "content":"ns2.'${DOMAIN}'."}}' ${GDNS}/domains/${DID}/records.json
+${CURL} -X POST -d '{"record": {"name": "'${DOMAIN}'.", "type": "NS", "content":"ns2.'${DOMAIN}'."}}' ${GDNS}/domains/${DID}/records.json | jq .
+echo ${CURL} -X POST -d '{"record": {"name": "'${DOMAIN}'.", "type": "NS", "content":"ns3.'${DOMAIN}'."}}' ${GDNS}/domains/${DID}/records.json
+${CURL} -X POST -d '{"record": {"name": "'${DOMAIN}'.", "type": "NS", "content":"ns3.'${DOMAIN}'."}}' ${GDNS}/domains/${DID}/records.json | jq .
 echo ${CURL} -X POST -d '{"record": {"name": "ns1.'${DOMAIN}'.", "type": "A", "content":"10.236.30.95"}}' ${GDNS}/domains/${DID}/records.json
 ${CURL} -X POST -d '{"record": {"name": "ns1.'${DOMAIN}'.", "type": "A", "content":"10.236.30.95"}}' ${GDNS}/domains/${DID}/records.json | jq .
 echo ${CURL} -X POST -d '{"record": {"name": "ns2.'${DOMAIN}'.", "type": "A", "content":"10.236.30.96"}}' ${GDNS}/domains/${DID}/records.json
